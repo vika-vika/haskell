@@ -13,18 +13,15 @@ moll_intervals = [2,1,2,2,1,2,2]
 -- http://en.wikipedia.org/wiki/Harmonization 
 
 -- Алгоритм построения аккорда в тональности от тоники: 
--- 1. определяем линейку тоники: 0 для С, 3 для F etc
--- 2. строим n терций от тоники: [0,2,4] для С, n = 3; [3,5,0,2] для F, n = 4
--- 3. Выбираем из нот в тональности полученные ступени:
---		Тональность F-moll состоит из ["F"<3>,"G"<4>,"Ab<5>","Bb<6>","C<0>","Db<1>","Eb<2>"], где <..> - ступень 
---      для G, n = 3 ступени равны [4,6,1]. В Тональности F-moll на этих ступенях стоят [G,Bb,Db]
+-- 1. определяем ступень тоники: 0 для С, 3 для F etc
+-- 2. строим n терций от тоники: ступени [0,2,4] для С, n = 3; ступени [3,5,0,2] для F, n = 4
+-- 3. Выбираем из нот в тональности соответствующие ступени:
+--		Тональность F-moll состоит из ["F"<3>,"G"<4>,"Ab<5>","Bb<6>","C<0>","Db<1>","Eb<2>"]
+--      для тоники G, n = 3 ступени равны [4,6,1]. В тональности F-moll на этих ступенях стоят [G,Bb,Db]
        
 
--- harmonizeScale note isDur numNotes = 
--- [(snd3 (searchNoteByName "C")), (snd3 (searchNoteByName "C")) + 1..(snd3 (searchNoteByName "C")) + 3 -1]
-
 findNoteByLevelTonality :: [([Char], Integer, Integer)] -> Integer -> [([Char], Integer, Integer)]
-findNoteByLevelTonality tonality level  = [n| n <- tonality, (snd3 n) == level] -- сделай из меня лямбду 
+findNoteByLevelTonality tonality level  = [n| n <- tonality, (snd3 n) == level] -- make me lambda, sweety
 
 buildAccordLevels :: [Char] -> Integer -> [Integer]
 buildAccordLevels noteName count = 
