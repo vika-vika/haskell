@@ -7,36 +7,33 @@ notes = [("C",0,0), ("Cb",0,11),("C#",0,1),("D",1,2),("Db",1,1),("D#",1,3),("E",
 dur_intervals  = [2,2,1,2,2,2,1]
 moll_intervals = [2,1,2,2,1,2,2]
  
--- key function 1. Generates list of Enharmonic notes C# ~ Db 
--- TODO: remove duplicates
-
-findEnharmonicNotes:: [([Char], Integer, Integer)] -> [([Char], [Char])]
-findEnharmonicNotes list = [(frst a, frst b) | a <- list, b <-list, last3 a == last3 b, frst a /= frst b]
-
 -- get Tonality functions
+
+--  Sample :
+--  Main> getTonalityShort "A" True
+--   ["A","B","C#","D","E","F#","G#"]
+--  Main> getTonalityShort "Afdg" True
+--   ["Bad input"]
 
 getTonalityShort :: [Char] -> Bool -> [[Char]]
 getTonalityShort noteName isDur = map frst (getTonality noteName isDur)
+
+--  Sample:
+--  Main> getTonality "C" True
+--   [("C",0,0),("D",1,2),("E",2,4),("F",3,5),("G",4,7),("A",5,9),("B",6,11)]
 
 getTonality :: [Char] -> Bool -> [([Char], Integer, Integer)]
 getTonality noteName isDur 
     | null [(note) | note <- notes, frst note == noteName] = [("Bad input", 0, 0)]
 	| otherwise = map searchNoteByCharacteristic (getRowValues (searchNoteByName noteName) isDur)
---	| otherwise = map searchNoteByCharacteristic (getMollRowValues (searchNoteByName noteName))
-
-	
+		
+		
 getRowValues ::  ([Char], Integer, Integer)  -> Bool -> [(Integer, Integer)]
 getRowValues note isDur =  
 	let intervals  
 		| isDur = dur_intervals
 		| otherwise = moll_intervals
 	in  zip (getLevelValuesTransposed (snd3 note)) (getToneValues (last3 note) intervals)
-
---getDurRowValues :: ([Char], Integer, Integer)  ->[(Integer, Integer)]
---getDurRowValues note =  zip  (getLevelValuesTransposed (snd3 note)) (getToneValues (last3 note) dur_intervals)
-
---getMollRowValues :: ([Char], Integer, Integer) -> [(Integer, Integer)]
---getMollRowValues note =  zip  (getLevelValuesTransposed (snd3 note)) (getToneValues (last3 note) moll_intervals)
 
 -- generate tones and levels lists for Tonality
 
@@ -85,3 +82,10 @@ snd3 (_,b,_) = b
 
 last3 :: (a, b, c) -> c
 last3 (_,_,c) = c
+
+-- *********
+-- key function 1. Generates list of Enharmonic notes C# ~ Db 
+-- TODO: remove duplicates, fixme
+
+findEnharmonicNotes:: [([Char], Integer, Integer)] -> [([Char], [Char])]
+findEnharmonicNotes list = [(frst a, frst b) | a <- list, b <-list, last3 a == last3 b, frst a /= frst b]
