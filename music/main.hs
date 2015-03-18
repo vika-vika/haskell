@@ -15,17 +15,28 @@ findEnharmonicNotes list = [(frst a, frst b) | a <- list, b <-list, last3 a == l
 
 -- get Tonality functions
 
-getMollTonality :: [Char] -> [([Char], Integer, Integer)]
-getMollTonality noteName = map searchNoteByCharacteristic (getMollRowValues (searchNoteByName noteName))
+getTonalityShort :: [Char] -> Bool -> [[Char]]
+getTonalityShort noteName isDur = map frst (getTonality noteName isDur)
 
-getDurTonality :: [Char] -> [([Char], Integer, Integer)]
-getDurTonality noteName = map searchNoteByCharacteristic (getDurRowValues (searchNoteByName noteName))
+getTonality :: [Char] -> Bool -> [([Char], Integer, Integer)]
+getTonality noteName isDur 
+    | null [(note) | note <- notes, frst note == noteName] = [("Bad input", 0, 0)]
+	| otherwise = map searchNoteByCharacteristic (getRowValues (searchNoteByName noteName) isDur)
+--	| otherwise = map searchNoteByCharacteristic (getMollRowValues (searchNoteByName noteName))
 
-getDurRowValues :: ([Char], Integer, Integer) -> [(Integer, Integer)]
-getDurRowValues note =  zip  (getLevelValuesTransposed (snd3 note)) (getToneValues (last3 note) dur_intervals)
+	
+getRowValues ::  ([Char], Integer, Integer)  -> Bool -> [(Integer, Integer)]
+getRowValues note isDur =  
+	let intervals  
+		| isDur = dur_intervals
+		| otherwise = moll_intervals
+	in  zip (getLevelValuesTransposed (snd3 note)) (getToneValues (last3 note) intervals)
 
-getMollRowValues :: ([Char], Integer, Integer) -> [(Integer, Integer)]
-getMollRowValues note =  zip  (getLevelValuesTransposed (snd3 note)) (getToneValues (last3 note) moll_intervals)
+--getDurRowValues :: ([Char], Integer, Integer)  ->[(Integer, Integer)]
+--getDurRowValues note =  zip  (getLevelValuesTransposed (snd3 note)) (getToneValues (last3 note) dur_intervals)
+
+--getMollRowValues :: ([Char], Integer, Integer) -> [(Integer, Integer)]
+--getMollRowValues note =  zip  (getLevelValuesTransposed (snd3 note)) (getToneValues (last3 note) moll_intervals)
 
 -- generate tones and levels lists for Tonality
 
