@@ -2,8 +2,17 @@ import Data.List
 
 maxTone = 12
 maxPosition = 7
+err = -1;
 
-notes = [("C",0,0), ("Cb",0,11),("C#",0,1),("D",1,2),("Db",1,1),("D#",1,3),("E",2,4),("Eb",2,3),("E#",2,5),("F",3,5), ("Fb",3,4), ("F#",3,6), ("G",4,7),("Gb",4,6),("G#",4,8), ("A",5,9),("Ab",5,8),("A#",5,10),("B",6,11),("Bb",6,10),("B#",6,12)]
+notes = [("C",0,0), ("Cb",0,11),("C#",0,1), ("Cbb",0,10), ("C##",0,2)
+        ,("D",1,2), ("Db",1,1), ("D#",1,3), ("Dbb",1,0) , ("D##",1,4)
+		,("E",2,4), ("Eb",2,3), ("E#",2,5), ("Ebb",2,2) , ("E##",2,6)
+		,("F",3,5), ("Fb",3,4), ("F#",3,6), ("Fbb",3,3) , ("F##",3,7)
+		,("G",4,7), ("Gb",4,6), ("G#",4,8), ("Gbb",4,5) , ("G##",4,9)
+		,("A",5,9), ("Ab",5,8), ("A#",5,10),("Abb",5,7) , ("A##",5,11)
+		,("B",6,11),("Bb",6,10),("B#",6,12),("Bbb",6,9) , ("B##",6,1)
+		]
+		
 dur_intervals  = [2,2,1,2,2,2,1]
 moll_intervals = [2,1,2,2,1,2,2]
 
@@ -13,26 +22,28 @@ moll_intervals = [2,1,2,2,1,2,2]
 -- http://en.wikipedia.org/wiki/Harmonization 
 
 -- Алгоритм построения аккорда в тональности от тоники: 
+-- 0. Проверяем принадлежит ли тоника заданной тональности, если нет, то halt
 -- 1. определяем ступень тоники: 0 для С, 3 для F etc
 -- 2. строим n терций от тоники: ступени [0,2,4] для С, n = 3; ступени [3,5,0,2] для F, n = 4
 -- 3. Выбираем из нот в тональности соответствующие ступени:
 --		Тональность F-moll состоит из ["F"<3>,"G"<4>,"Ab<5>","Bb<6>","C<0>","Db<1>","Eb<2>"]
 --      для тоники G, n = 3 ступени равны [4,6,1]. В тональности F-moll на этих ступенях стоят [G,Bb,Db]
        
+buildAccord ::[Char] -> [Char]-> Bool -> Integer -> [([Char], Integer, Integer)]
+buildAccord tonicName tonalityName isDur count 
+	| null [(note) | note <- notes, frst note == tonicName] = [("Bad input, Unrecognised note", err, -2)]
+	| length tonalityName > 2 = [("No Doubles allowed, Use simple enharmonic notes for tonality", err, -10)]
+	| not (tonicName `elem` (buildTonalityShort tonalityName isDur)) = [("Accord's Tonic not in Tonality", err, -1)]
+	| otherwise = map (findNoteByLevelInTonality tonality) levelsList
+        where tonality = buildTonality tonalityName isDur
+              tonicNote = searchNoteByName tonicName
+              tonicLevel = snd3 tonicNote
+              levelsList = map transposePosition [tonicLevel, tonicLevel + 2.. tonicLevel + 2 * count - 1]
+			  
+			  
+findNoteByLevelInTonality :: [([Char], Integer, Integer)] -> Integer -> ([Char], Integer, Integer)
+findNoteByLevelInTonality tonality level  = [n| n <- tonality, (snd3 n) == level] !! 0
 
-findNoteByLevelTonality :: [([Char], Integer, Integer)] -> Integer -> [([Char], Integer, Integer)]
-findNoteByLevelTonality tonality level  = [n| n <- tonality, (snd3 n) == level] -- make me lambda, sweety
-
-buildAccordLevels :: [Char] -> Integer -> [Integer]
-buildAccordLevels noteName count = 
-	let start = (snd3 (searchNoteByName noteName))
-	in map transposePosition [start, start + 2.. start + 2 * count - 1]
-	
-generateAccord ::[Char] -> [Char] -> Integer -> [[([Char], Integer, Integer)]] 
-generateAccord note tonic count =
-	let tonality = buildTonality tonic True
-	in map (findNoteByLevelTonality tonality) (buildAccordLevels note count)
- 
 -- ********* Tonality functions *********
 
 --  Sample :
@@ -50,7 +61,7 @@ buildTonalityShort noteName isDur = map frst (buildTonality noteName isDur)
 
 buildTonality :: [Char] -> Bool -> [([Char], Integer, Integer)]
 buildTonality noteName isDur 
-    | null [(note) | note <- notes, frst note == noteName] = [("Bad input", 0, 0)]
+    | null [(note) | note <- notes, frst note == noteName] = [("Bad input", err, -2)]
 	| otherwise = map searchNoteByCharacteristic (buildRowNotesDataSeq (searchNoteByName noteName) isDur)
 		
 		
@@ -88,6 +99,7 @@ transpose' x value
 	| otherwise = x `mod` value
 
 -- ********* NOTES LIST SEARCH *********
+
 searchNoteByName :: [Char] -> ([Char], Integer, Integer)
 searchNoteByName name = [a | a <- notes, (frst a == name)] !! 0
 
@@ -109,7 +121,7 @@ snd3 (_,b,_) = b
 last3 :: (a, b, c) -> c
 last3 (_,_,c) = c
 
--- *********
+-- **************************************************************************
 -- key function 1. Generates list of Enharmonic notes C# ~ Db 
 -- TODO: remove duplicates, fixme
 
