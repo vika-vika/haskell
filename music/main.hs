@@ -28,14 +28,23 @@ moll_intervals = [2,1,2,2,1,2,2]
 -- 3. Выбираем из нот в тональности соответствующие ступени:
 --		Тональность F-moll состоит из ["F"<3>,"G"<4>,"Ab<5>","Bb<6>","C<0>","Db<1>","Eb<2>"]
 --      для тоники G, n = 3 ступени равны [4,6,1]. В тональности F-moll на этих ступенях стоят [G,Bb,Db]
-       
+
+harmonizeTonality :: [Char] -> Bool -> Integer -> [[([Char])]]
+harmonizeTonality tonalityName isDur count = 
+    map (map frst) (harmonizeTonality' tonalityName isDur count)
+	
+--  with note level and tone  
+harmonizeTonality' :: [Char] -> Bool -> Integer -> [[([Char], Integer, Integer)]]
+harmonizeTonality' tonalityName isDur count = 
+	map (\tonic -> buildAccord tonic tonalityName isDur count) (buildTonality tonalityName isDur)
+
 buildAccord ::[Char] -> [Char]-> Bool -> Integer -> [([Char], Integer, Integer)]
 buildAccord tonicName tonalityName isDur count 
 	| null [(note) | note <- notes, frst note == tonicName] = [("Bad input, Unrecognised note", err, -2)]
-	| length tonalityName > 2 = [("No Doubles allowed, Use simple enharmonic notes for tonality", err, -10)]
-	| not (tonicName `elem` (buildTonalityShort tonalityName isDur)) = [("Accord's Tonic not in Tonality", err, -1)]
+	| length tonalityName > 2 = [("No Doubles allowed, Use simple enharmonic note for tonality", err, -10)]
+	| not (tonicName `elem` (buildTonality tonalityName isDur)) = [("Accord's Tonic not in Tonality", err, -1)]
 	| otherwise = map (findNoteByLevelInTonality tonality) levelsList
-        where tonality = buildTonality tonalityName isDur
+        where tonality = buildTonality' tonalityName isDur
               tonicNote = searchNoteByName tonicName
               tonicLevel = snd3 tonicNote
               levelsList = map transposePosition [tonicLevel, tonicLevel + 2.. tonicLevel + 2 * count - 1]
@@ -47,20 +56,21 @@ findNoteByLevelInTonality tonality level  = [n| n <- tonality, (snd3 n) == level
 -- ********* Tonality functions *********
 
 --  Sample :
---  Main> buildTonalityShort "A" True
+--  Main> buildTonality "A" True
 --   ["A","B","C#","D","E","F#","G#"]
---  Main> buildTonalityShort "Afdg" True
+--  Main> buildTonality"Afdg" True
 --   ["Bad input"]
 
-buildTonalityShort :: [Char] -> Bool -> [[Char]]
-buildTonalityShort noteName isDur = map frst (buildTonality noteName isDur)
+buildTonality :: [Char] -> Bool -> [[Char]]
+buildTonality noteName isDur = map frst (buildTonality' noteName isDur)
 
 --  Sample:
---  Main> buildTonality "C" True
+--  Main> buildTonality' "C" True
 --   [("C",0,0),("D",1,2),("E",2,4),("F",3,5),("G",4,7),("A",5,9),("B",6,11)]
 
-buildTonality :: [Char] -> Bool -> [([Char], Integer, Integer)]
-buildTonality noteName isDur 
+--  with note level and tone 
+buildTonality' :: [Char] -> Bool -> [([Char], Integer, Integer)]
+buildTonality' noteName isDur 
     | null [(note) | note <- notes, frst note == noteName] = [("Bad input", err, -2)]
 	| otherwise = map searchNoteByCharacteristic (buildRowNotesDataSeq (searchNoteByName noteName) isDur)
 		
@@ -124,6 +134,6 @@ last3 (_,_,c) = c
 -- **************************************************************************
 -- key function 1. Generates list of Enharmonic notes C# ~ Db 
 -- TODO: remove duplicates, fixme
-
+       
 findEnharmonicNotes:: [([Char], Integer, Integer)] -> [([Char], [Char])]
 findEnharmonicNotes list = [(frst a, frst b) | a <- list, b <-list, last3 a == last3 b, frst a /= frst b]
