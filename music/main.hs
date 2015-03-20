@@ -24,7 +24,7 @@ moll_intervals = [2,1,2,2,1,2,2]
 -- Алгоритм построения аккорда в тональности от тоники: 
 -- 0. Проверяем принадлежит ли тоника заданной тональности, если нет, то halt
 -- 1. определяем ступень тоники: 0 для С, 3 для F etc
--- 2. строим n терций от тоники: ступени [0,2,4] для С, n = 3; ступени [3,5,0,2] для F, n = 4
+-- 2. строим n-1 терций от тоники: ступени [0,2,4] для С, n = 3; ступени [3,5,0,2] для F, n = 4
 -- 3. Выбираем из нот в тональности соответствующие ступени:
 --		Тональность F-moll состоит из ["F"<3>,"G"<4>,"Ab<5>","Bb<6>","C<0>","Db<1>","Eb<2>"]
 --      для тоники G, n = 3 ступени равны [4,6,1]. В тональности F-moll на этих ступенях стоят [G,Bb,Db]
@@ -72,6 +72,7 @@ buildTonality noteName isDur = map frst (buildTonality' noteName isDur)
 buildTonality' :: [Char] -> Bool -> [([Char], Integer, Integer)]
 buildTonality' noteName isDur 
     | null [(note) | note <- notes, frst note == noteName] = [("Bad input", err, -2)]
+	| length noteName > 2 = [("No Doubles allowed, Use simple enharmonic note for tonality", err, -10)]
 	| otherwise = map searchNoteByCharacteristic (buildRowNotesDataSeq (searchNoteByName noteName) isDur)
 		
 		
